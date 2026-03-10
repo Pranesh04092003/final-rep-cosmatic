@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="container auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Create Account</h1>
+        <p>Join our community</p>
+      </div>
+      <form id="signup-form" class="auth-form">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <input type="password" id="confirm-password" name="confirm-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </form>
+      <div class="auth-footer">
+        <p>Already have an account? <a href="login.html">Login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    let isSubmitting = false;
+    
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Prevent multiple submissions
+      if (isSubmitting) {
+        console.warn('⚠️ Form already submitting...');
+        return;
+      }
+      isSubmitting = true;
+      
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      console.log('🚀 Signup started:', { name, email });
+
+      if (!name || !email || !password) {
+        console.error('❌ Missing fields');
+        isSubmitting = false;
+        showNotification('Please fill all fields', 'error');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        console.error('❌ Passwords do not match');
+        isSubmitting = false;
+        showNotification('Passwords do not match', 'error');
+        return;
+      }
+
+      try {
+        console.log('📝 Calling signup API...');
+        const signupResult = await window.api.signupApi({ email, password, name });
+        console.log('✅ Signup API response:', signupResult);
+        
+        if (signupResult && signupResult.id) {
+          console.log('💾 Saving user to localStorage...');
+          authManager.saveUser({
+            id: signupResult.id,
+            name: signupResult.name,
+            email: signupResult.email,
+            isAdmin: signupResult.isAdmin || false
+          });
+          
+          console.log('✅ User saved:', authManager.currentUser);
+          showNotification('✅ Account created! Redirecting...', 'success');
+          
+          // Redirect immediately without animation
+          console.log('🔄 Redirecting to /index.html');
+          
+          // Use absolute path and redirect
+          window.location.replace('/index.html');
+        } else {
+          isSubmitting = false;
+          console.error('❌ No ID in signup response:', signupResult);
+          showNotification('Signup failed: Invalid response from server', 'error');
+        }
+      } catch (error) {
+        isSubmitting = false;
+        console.error('❌ Signup error:', error);
+        showNotification('Error: ' + (error.message || 'Unknown error'), 'error');
+      }
+    });
+  </script>
+</body>
+</html>

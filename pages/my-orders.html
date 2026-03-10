@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="logo">
+        <a href="../index.html">💄 Beauty Cosmetics</a>
+      </div>
+      <div class="nav-center">
+        <a href="products.html" class="nav-link">Shop</a>
+        <a href="my-orders.html" class="nav-link active">My Orders</a>
+      </div>
+      <div class="nav-right" id="auth-links"></div>
+      <a href="cart.html" class="cart-link">
+        🛒 Cart <span id="cart-badge" class="cart-badge">0</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>My Orders</h1>
+    
+    <div id="orders-container" class="orders-list">
+      <!-- Orders will be loaded here -->
+    </div>
+
+    <div id="empty-orders" class="empty-cart" style="display: none;">
+      <p>You haven't placed any orders yet</p>
+      <a href="products.html" class="btn btn-primary">Start Shopping</a>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    if (!authManager.isLoggedIn()) {
+      window.location.href = 'login.html';
+    }
+
+    async function loadMyOrders() {
+      try {
+        const userId = authManager.currentUser.id;
+        const orders = await orderManager.getOrders(String(userId));
+        
+        const container = document.getElementById('orders-container');
+        const emptyMsg = document.getElementById('empty-orders');
+
+        if (!orders || orders.length === 0) {
+          container.style.display = 'none';
+          emptyMsg.style.display = 'block';
+          return;
+        }
+
+        container.style.display = 'block';
+        emptyMsg.style.display = 'none';
+
+        container.innerHTML = orders.map(order => {
+          const statusClass = order.status === 'Delivered' ? 'success' : 
+                            order.status === 'Cancelled' ? 'danger' : 
+                            order.status === 'Shipped' ? 'info' : 'warning';
+          
+          return `
+            <div class="order-card">
+              <div class="order-header">
+                <div>
+                  <h3>Order #${order.id}</h3>
+                  <p class="order-date">Placed on ${order.date}</p>
+                </div>
+                <div>
+                  <span class="status-badge status-${statusClass}">${order.status}</span>
+                </div>
+              </div>
+              
+              <div class="order-items">
+                ${order.items.map(item => `
+                  <div class="order-item-row">
+                    <span>${item.name} × ${item.quantity}</span>
+                    <span>${formatPrice(item.price * item.quantity)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              
+              <div class="order-footer">
+                <div class="order-total">
+                  <strong>Total: ${formatPrice(order.total)}</strong>
+                </div>
+                <div class="order-actions">
+                  <a href="order-confirmation.html?id=${order.id}" class="btn btn-small btn-secondary">View Details</a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        showNotification(err.message || 'Failed to load orders', 'error');
+      }
+    }
+
+    loadMyOrders();
+  </script>
+</body>
+</html>

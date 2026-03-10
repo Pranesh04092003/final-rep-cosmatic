@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="logo">
+        <a href="../index.html">💄 Beauty Cosmetics</a>
+      </div>
+      <div class="nav-center">
+        <a href="products.html" class="nav-link">Shop</a>
+        <a href="my-orders.html" class="nav-link">My Orders</a>
+      </div>
+      <div class="nav-right" id="auth-links"></div>
+      <a href="cart.html" class="cart-link">
+        🛒 Cart <span id="cart-badge" class="cart-badge">0</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="confirmation-container">
+      <div class="confirmation-header">
+        <div class="success-icon">✓</div>
+        <h1>Order Placed Successfully!</h1>
+        <p id="order-id-display" style="font-size: 1.2em; font-weight: bold; color: #333; margin: 10px 0;"></p>
+        <p>Thank you for your purchase</p>
+      </div>
+
+      <div id="order-details" class="order-details-card">
+        <!-- Order details will be loaded here -->
+      </div>
+
+      <div class="confirmation-actions">
+        <a href="my-orders.html" class="btn btn-primary">View My Orders</a>
+        <a href="products.html" class="btn btn-secondary">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    const orderId = new URLSearchParams(window.location.search).get('id');
+
+    async function loadOrder() {
+      try {
+        console.log('Loading order with ID:', orderId);
+        
+        // Retry mechanism - try up to 5 times with delay
+        let order = null;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (retries < maxRetries && !order) {
+          try {
+            order = await orderManager.getOrder(orderId);
+            if (order) {
+              console.log('Order found on attempt', retries + 1);
+              break;
+            }
+          } catch (e) {
+            console.log('Attempt', retries + 1, 'failed:', e.message);
+          }
+          
+          retries++;
+          if (!order && retries < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+          }
+        }
+        
+        console.log('Order data received:', order);
+        
+        if (!order) {
+          document.body.innerHTML = '<div class="container"><h1>Order not found</h1><p>Order ID: ' + orderId + '</p><p>Please try again in a moment or <a href="my-orders.html">check My Orders</a></p></div>';
+          return;
+        }
+
+        document.getElementById('order-id-display').textContent = `Order ID: ${order.id}`;
+
+        const detailsDiv = document.getElementById('order-details');
+        const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const shipping = order.shipping_method === 'express' ? 300 : 100;
+        const tax = Math.round(subtotal * 0.1);
+
+        const itemsHtml = order.items.map(item => `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.quantity}</td>
+            <td>${formatPrice(item.price)}</td>
+            <td>${formatPrice(item.price * item.quantity)}</td>
+          </tr>
+        `).join('');
+
+        detailsDiv.innerHTML = `
+          <div class="confirmation-section">
+            <h3>Order #${order.id}</h3>
+            <p class="order-date">Date: ${order.date}</p>
+          </div>
+
+          <div class="confirmation-section">
+            <h4>Shipping Address</h4>
+            <p>
+              ${order.shipping_address.firstName} ${order.shipping_address.lastName}<br>
+              ${order.shipping_address.address}<br>
+              ${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zipcode}<br>
+              ${order.shipping_address.country}<br>
+              Phone: ${order.shipping_address.phone}
+            </p>
+          </div>
+
+          <div class="confirmation-section">
+            <h4>Order Items</h4>
+            <table class="order-items-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="confirmation-section">
+            <h4>Payment Details</h4>
+            <p>
+              Payment Method: <strong>${order.payment_method.toUpperCase()}</strong><br>
+              Shipping Method: <strong>${order.shipping_method === 'express' ? 'Express (2-3 days)' : 'Standard (5-7 days)'}</strong><br>
+              Status: <strong class="status-badge">${order.status}</strong>
+            </p>
+          </div>
+
+          <div class="confirmation-section totals">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>${formatPrice(subtotal)}</span>
+            </div>
+            <div class="total-row">
+              <span>Shipping:</span>
+              <span>${formatPrice(shipping)}</span>
+            </div>
+            <div class="total-row">
+              <span>Tax:</span>
+              <span>${formatPrice(tax)}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>Total Amount:</span>
+              <span>${formatPrice(order.total)}</span>
+            </div>
+          </div>
+
+          <div class="confirmation-message">
+            <p>A confirmation email has been sent to <strong>${order.email}</strong></p>
+            <p>You can track your order in your account dashboard.</p>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Error loading order:', err);
+        document.body.innerHTML = '<div class="container"><h1>Error loading order</h1><p>' + err.message + '</p><p>Order ID: ' + orderId + '</p></div>';
+      }
+    }
+
+    loadOrder();
+  </script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="logo">
+        <a href="../index.html">💄 Beauty Cosmetics</a>
+      </div>
+      <div class="nav-center">
+        <input type="text" id="search-input" placeholder="Search products..." class="search-box">
+        <a href="my-orders.html" class="nav-link" style="margin-left: 20px;">My Orders</a>
+      </div>
+      <div class="nav-right" id="auth-links">
+        <a href="login.html">Login</a>
+      </div>
+      <a href="cart.html" class="cart-link">
+        🛒 Cart <span id="cart-badge" class="cart-badge">0</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Sidebar with Categories -->
+  <div class="products-container">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <h3>Categories</h3>
+        <div class="category-list">
+          <button class="category-btn active" data-category="all">All Products</button>
+          <div id="categories-list"></div>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Price Range</h3>
+        <input type="range" id="price-slider" min="0" max="5000" value="5000" class="slider">
+        <p>Max Price: ₹<span id="price-value">5000</span></p>
+      </div>
+    </aside>
+
+    <!-- Main Products Display -->
+    <main class="products-main">
+      <div class="products-header">
+        <h2>Our Products</h2>
+        <div class="sort-container">
+          <select id="sort-select" class="sort-select">
+            <option value="default">Sort By</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="products-grid" class="products-grid">
+        <!-- Products will be loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for Quick View -->
+  <div id="quick-view-modal" class="modal">
+    <div class="modal-content modal-lg">
+      <button class="modal-close">&times;</button>
+      <div id="quick-view-content"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    let products = [];
+    let categories = [];
+    let filteredProducts = [];
+
+    // Load categories
+    function loadCategories() {
+      const categoriesList = document.getElementById('categories-list');
+      categoriesList.innerHTML = '';
+      categories.forEach(category => {
+        const btn = document.createElement('button');
+        btn.className = 'category-btn';
+        btn.textContent = category;
+        btn.dataset.category = category;
+        btn.addEventListener('click', (e) => filterByCategory(category, e.currentTarget));
+        categoriesList.appendChild(btn);
+      });
+    }
+
+    // Filter by category
+    function filterByCategory(category, btn) {
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      if (category === 'all') {
+        filteredProducts = [...products];
+      } else {
+        filteredProducts = products.filter(p => p.category === category);
+      }
+      applyFilters();
+    }
+
+    // Search products
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filteredProducts = products.filter(p => 
+        p.name.toLowerCase().includes(searchTerm) || 
+        p.description.toLowerCase().includes(searchTerm)
+      );
+      applyFilters();
+    });
+
+    // Price filter
+    document.getElementById('price-slider').addEventListener('input', (e) => {
+      document.getElementById('price-value').textContent = e.target.value;
+      applyFilters();
+    });
+
+    // Sort products
+    document.getElementById('sort-select').addEventListener('change', (e) => {
+      const sortType = e.target.value;
+      switch(sortType) {
+        case 'price-low':
+          filteredProducts.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-high':
+          filteredProducts.sort((a, b) => b.price - a.price);
+          break;
+        case 'rating':
+          filteredProducts.sort((a, b) => b.rating - a.rating);
+          break;
+      }
+      displayProducts(filteredProducts);
+    });
+
+    // Apply all filters
+    function applyFilters() {
+      const maxPrice = parseInt(document.getElementById('price-slider').value);
+      const filtered = filteredProducts.filter(p => p.price <= maxPrice);
+      displayProducts(filtered);
+    }
+
+    // Display products
+    function displayProducts(productsToShow) {
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
+
+      if (productsToShow.length === 0) {
+        grid.innerHTML = '<p class="no-products">No products found</p>';
+        return;
+      }
+
+      productsToShow.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
+            <div class="product-overlay">
+              <button class="btn btn-small btn-primary" onclick="addToCart(${product.id})">Add to Cart</button>
+              <button class="btn btn-small btn-secondary" onclick="quickView(${product.id})">Quick View</button>
+            </div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-category">${product.category}</p>
+            <div class="product-rating">
+              ${'⭐'.repeat(Math.floor(product.rating))} (${product.rating})
+            </div>
+            <p class="product-price">${formatPrice(product.price)}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Add to cart
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      const result = cartManager.addItem(product);
+      showNotification(result.message, 'success');
+      updateCartBadge();
+    }
+
+    // Quick view
+    function quickView(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const modal = document.getElementById('quick-view-modal');
+      const content = document.getElementById('quick-view-content');
+      content.innerHTML = `
+        <div class="quick-view-content">
+          <div class="qv-image">
+            <img src="${product.image}" alt="${product.name}">
+          </div>
+          <div class="qv-info">
+            <h2>${product.name}</h2>
+            <p class="qv-category">${product.category}</p>
+            <div class="product-rating">
+              ${'⭐'.repeat(Math.floor(product.rating))} (${product.rating})
+            </div>
+            <p class="qv-description">${product.description}</p>
+            <p class="qv-price">${formatPrice(product.price)}</p>
+            <div class="qv-actions">
+              <input type="number" min="1" value="1" id="qv-qty" class="qty-input">
+              <button class="btn btn-primary" onclick="addToCartQV(${product.id})">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.add('active');
+    }
+
+    function addToCartQV(productId) {
+      const qty = parseInt(document.getElementById('qv-qty').value);
+      const product = products.find(p => p.id === productId);
+      cartManager.addItem(product, qty);
+      showNotification(`${product.name} added to cart!`);
+      updateCartBadge();
+      document.getElementById('quick-view-modal').classList.remove('active');
+    }
+
+    // Close modal
+    document.querySelector('.modal-close').addEventListener('click', () => {
+      document.getElementById('quick-view-modal').classList.remove('active');
+    });
+
+    async function initProducts() {
+      try {
+        products = await window.api.fetchProducts();
+        filteredProducts = [...products];
+        categories = await window.api.fetchCategories();
+        loadCategories();
+        const allBtn = document.querySelector('.category-btn[data-category="all"]');
+        if (allBtn) {
+          allBtn.addEventListener('click', (e) => filterByCategory('all', e.currentTarget));
+        }
+        displayProducts(products);
+      } catch (err) {
+        showNotification(err.message || 'Failed to load products', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initProducts);
+  </script>
+</body>
+</html>

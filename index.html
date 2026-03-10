@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmetic Store - Beauty Products Online</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="logo">
+        <a href="index.html">💄 Beauty Cosmetics</a>
+      </div>
+      <div class="nav-center">
+        <a href="pages/products.html" class="nav-link">Shop</a>
+        <a href="#featured" class="nav-link">Featured</a>
+        <a href="pages/my-orders.html" class="nav-link">My Orders</a>
+      </div>
+      <div class="nav-right" id="auth-links"></div>
+      <a href="pages/cart.html" class="cart-link">
+        🛒 Cart <span id="cart-badge" class="cart-badge">0</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Discover Your Beauty</h1>
+      <p>Premium cosmetics for every skin type</p>
+      <a href="pages/products.html" class="btn btn-primary btn-lg">Shop Now</a>
+    </div>
+    <div class="hero-image">
+      <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=600&fit=crop" alt="Beauty products">
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section id="featured" class="featured-section">
+    <div class="container">
+      <h2>Featured Products</h2>
+      <div id="featured-products" class="products-grid">
+        <!-- Featured products will be loaded here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Section -->
+  <section class="categories-section">
+    <div class="container">
+      <h2>Shop by Category</h2>
+      <div id="categories-grid" class="categories-grid">
+        <!-- Categories will be loaded here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="why-us-section">
+    <div class="container">
+      <h2>Why Choose Us?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">✓</div>
+          <h3>Premium Quality</h3>
+          <p>All products are carefully selected and tested for quality</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚚</div>
+          <h3>Fast Delivery</h3>
+          <p>Quick and reliable shipping to your doorstep</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Best Prices</h3>
+          <p>Competitive pricing with regular discounts and offers</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Secure Payment</h3>
+          <p>Safe and encrypted payment methods for your security</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>About Us</h4>
+          <p>We are a leading online cosmetics store offering premium beauty products.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="pages/products.html">Shop</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Customer Service</h4>
+          <ul>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Track Order</a></li>
+            <li><a href="#">Returns</a></li>
+            <li><a href="#">FAQs</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Contact Info</h4>
+          <p>Email: info@beautycosmeticstore.com</p>
+          <p>Phone: +91-78923 38038</p>
+          <p>Address:Bangalore, India</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Beauty Cosmetics Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let products = [];
+    let categories = [];
+
+    function renderFeaturedProducts() {
+      const featured = products.slice(0, 8);
+      const grid = document.getElementById('featured-products');
+      
+      grid.innerHTML = featured.map(product => `
+        <div class="product-card">
+          <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
+            <div class="product-overlay">
+              <a href="pages/product-details.html?id=${product.id}" class="btn btn-small btn-primary">View Details</a>
+              <button class="btn btn-small btn-secondary" onclick="quickAddToCart(${product.id})">Add to Cart</button>
+            </div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-category">${product.category}</p>
+            <div class="product-rating">${'⭐'.repeat(Math.floor(product.rating))}</div>
+            <p class="product-price">${formatPrice(product.price)}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCategories() {
+      const grid = document.getElementById('categories-grid');
+      
+      grid.innerHTML = categories.map(category => `
+        <a href="pages/products.html?category=${category}" class="category-card">
+          <div class="category-icon">📦</div>
+          <h3>${category}</h3>
+        </a>
+      `).join('');
+    }
+
+    function quickAddToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        cartManager.addItem(product);
+        showNotification(`${product.name} added to cart!`);
+        updateCartBadge();
+      }
+    }
+
+    async function initHome() {
+      try {
+        products = await window.api.fetchProducts();
+        categories = await window.api.fetchCategories();
+        renderFeaturedProducts();
+        renderCategories();
+      } catch (err) {
+        showNotification(err.message || 'Failed to load products', 'error');
+      }
+    }
+ quickAddToCart;
+    document.addEventListener('DOMContentLoaded', initHome);
+  </script>
+</body>
+</html>
+
+    window.quickAddToCart =

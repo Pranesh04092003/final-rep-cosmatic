@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Cosmetic Store</title>
+</head>
+<body>
+  <div class="container auth-contain  <link rel="stylesheet" href="../css/style.css">
+er">
+    <div class="auth-card">
+      <      <div class="auth-footer">
+        <p><a href="../index.html">Back to Home</a></p>
+      </div>
+    </div>
+  </div>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('password').value;
+
+      const result = await authManager.adminLogin(password);
+      if (result.success) {
+        showNotification(result.message);
+        setTimeout(() => {
+          window.location.href = 'admin.html';
+        }, 1000);
+      } else {
+        showNotification(result.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

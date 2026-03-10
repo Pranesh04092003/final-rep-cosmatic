@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="container auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Welcome Back</h1>
+        <p>Login to your account</p>
+      </div>
+      <div class="auth-tabs" role="tablist" aria-label="Login type">
+        <button type="button" class="auth-tab active" data-role="user" role="tab" aria-selected="true">User</button>
+        <button type="button" class="auth-tab" data-role="admin" role="tab" aria-selected="false">Admin</button>
+      </div>
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+      <div class="auth-footer">
+        <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    const roleButtons = Array.from(document.querySelectorAll('.auth-tab'));
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    let currentRole = 'user';
+
+    const updateRoleFields = (role) => {
+      const isAdmin = role === 'admin';
+      emailInput.required = !isAdmin;
+      emailInput.disabled = false;
+      emailInput.placeholder = '';
+      passwordInput.placeholder = '';
+    };
+
+    roleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        currentRole = button.dataset.role || 'user';
+        updateRoleFields(currentRole);
+        roleButtons.forEach((btn) => {
+          const isActive = btn === button;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+      });
+    });
+
+    updateRoleFields(currentRole);
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      console.log('🚀 Login started:', currentRole);
+
+      try {
+        const result = currentRole === 'admin'
+          ? await authManager.adminLogin(password)
+          : await authManager.login(email, password);
+        console.log('✅ Login result:', result);
+
+        if (!result.success) {
+          console.error('❌ Login failed:', result.message);
+          showNotification(result.message, 'error');
+          return;
+        }
+
+        if (currentRole === 'admin') {
+          showNotification('✅ Admin login successful!', 'success');
+          window.location.replace('admin.html');
+          return;
+        }
+
+        if (authManager.isAdmin()) {
+          authManager.logout();
+          showNotification('Use the Admin tab to login as admin.', 'error');
+          return;
+        }
+
+        showNotification('✅ Login successful!', 'success');
+        window.location.replace('/index.html');
+      } catch (error) {
+        console.error('❌ Login error:', error);
+        showNotification('Error: ' + error.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

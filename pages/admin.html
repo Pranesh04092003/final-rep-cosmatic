@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Cosmetic Store</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="logo">
+        <a href="../index.html">💄 Beauty Cosmetics</a>
+      </div>
+      <div class="nav-right">
+        <span class="admin-label">ADMIN</span>
+        <a href="../index.html" class="admin-logout-link" onclick="adminLogout(); return false;">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <h3>Admin Menu</h3>
+      <ul class="admin-menu">
+        <li><a href="#" onclick="showTab('dashboard')">📊 Dashboard</a></li>
+        <li><a href="#" onclick="showTab('products')">📦 Manage Products</a></li>
+        <li><a href="#" onclick="showTab('orders')">📋 Manage Orders</a></li>
+        <li><a href="#" onclick="showTab('users')">👥 Users</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab" class="admin-tab active">
+        <h2>Dashboard</h2>
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <h4>Total Products</h4>
+            <p class="stat-number" id="total-products">0</p>
+          </div>
+          <div class="stat-card">
+            <h4>Total Orders</h4>
+            <p class="stat-number" id="total-orders">0</p>
+          </div>
+          <div class="stat-card">
+            <h4>Total Users</h4>
+            <p class="stat-number" id="total-users">0</p>
+          </div>
+          <div class="stat-card">
+            <h4>Total Revenue</h4>
+            <p class="stat-number" id="total-revenue">₹0</p>
+          </div>
+        </div>
+
+        <div class="recent-orders">
+          <h3>Recent Orders</h3>
+          <table id="recent-orders-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Products Tab -->
+      <div id="products-tab" class="admin-tab">
+        <h2>Manage Products</h2>
+        
+        <div class="admin-actions">
+          <button class="btn btn-primary" onclick="showAddProductForm()">+ Add New Product</button>
+        </div>
+
+        <form id="product-form" class="admin-form" style="display: none;">
+          <h3 id="form-title">Add New Product</h3>
+          <input type="hidden" id="product-id">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prod-name">Product Name *</label>
+              <input type="text" id="prod-name" required>
+            </div>
+            <div class="form-group">
+              <label for="prod-category">Category *</label>
+              <select id="prod-category" required onchange="handleCategoryChange(this)">
+                <option value="">Select Category</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="new-category-input" style="display: none;">
+            <label for="prod-new-category">New Category Name *</label>
+            <input type="text" id="prod-new-category" placeholder="Enter new category name">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prod-price">Price (₹) *</label>
+              <input type="number" id="prod-price" min="0" required>
+            </div>
+            <div class="form-group">
+              <label for="prod-rating">Rating *</label>
+              <input type="number" id="prod-rating" min="0" max="5" step="0.1" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-description">Description *</label>
+            <textarea id="prod-description" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-image">Image URL *</label>
+            <input type="text" id="prod-image" required>
+            <small style="color: #666; font-size: 12px;">Image will be automatically resized to 300x300</small>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Product</button>
+            <button type="button" class="btn btn-secondary" onclick="hideAddProductForm()">Cancel</button>
+          </div>
+        </form>
+
+        <div id="products-list" class="admin-list">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Orders Tab -->
+      <div id="orders-tab" class="admin-tab">
+        <h2>Manage Orders</h2>
+        
+        <div class="orders-filter">
+          <select id="status-filter">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="users-tab" class="admin-tab">
+        <h2>Registered Users</h2>
+        
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Join Date</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div id="order-detail-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <div id="order-detail-content"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    if (!authManager.isAdmin()) {
+      window.location.href = 'admin-login.html';
+    }
+
+    let adminProducts = [];
+    let adminOrders = [];
+    let adminUsers = [];
+
+    function showTab(tabName) {
+      document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabName + '-tab').classList.add('active');
+
+      if (tabName === 'dashboard') loadDashboard();
+      else if (tabName === 'products') loadProductsTab();
+      else if (tabName === 'orders') loadOrdersTab();
+      else if (tabName === 'users') loadUsersTab();
+    }
+
+    function loadDashboard() {
+      const totalRevenue = adminOrders.reduce((sum, order) => sum + order.total, 0);
+
+      document.getElementById('total-products').textContent = adminProducts.length;
+      document.getElementById('total-orders').textContent = adminOrders.length;
+      document.getElementById('total-users').textContent = adminUsers.length;
+      document.getElementById('total-revenue').textContent = formatPrice(totalRevenue);
+
+      const recentOrders = [...adminOrders].slice(-5).reverse();
+      const tbody = document.querySelector('#recent-orders-table tbody');
+      tbody.innerHTML = recentOrders.map(order => `
+        <tr>
+          <td>${order.id}</td>
+          <td>${order.email}</td>
+          <td>${formatPrice(order.total)}</td>
+          <td><span class="status-badge">${order.status}</span></td>
+          <td>${order.date}</td>
+        </tr>
+      `).join('');
+    }
+
+    function loadProductsTab() {
+      const tbody = document.getElementById('products-table-body');
+      tbody.innerHTML = adminProducts.map(product => `
+        <tr>
+          <td>${product.id}</td>
+          <td>${product.name}</td>
+          <td>${product.category}</td>
+          <td>${formatPrice(product.price)}</td>
+          <td>${product.rating}</td>
+          <td>
+            <button class="btn btn-small btn-secondary" onclick="editProduct(${product.id})">Edit</button>
+            <button class="btn btn-small btn-danger" onclick="deleteProduct(${product.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadOrdersTab() {
+      const tbody = document.getElementById('orders-table-body');
+
+      tbody.innerHTML = adminOrders.map(order => `
+        <tr>
+          <td>${order.id}</td>
+          <td>${order.email}</td>
+          <td>${order.items.length}</td>
+          <td>${formatPrice(order.total)}</td>
+          <td>
+            <select class="status-select" onchange="updateOrderStatus('${order.id}', this.value)">
+              <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+              <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+              <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+              <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </td>
+          <td>${order.date}</td>
+          <td>
+            <button class="btn btn-small btn-secondary" onclick="viewOrderDetails('${order.id}')">View</button>
+            <button class="btn btn-small btn-danger" onclick="deleteOrder('${order.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadUsersTab() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = adminUsers.map(user => `
+        <tr>
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.isAdmin ? 'Admin' : 'Customer'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function showAddProductForm() {
+      document.getElementById('product-form').style.display = 'block';
+      document.getElementById('form-title').textContent = 'Add New Product';
+      document.getElementById('product-form').reset();
+      document.getElementById('product-id').value = '';
+
+      loadCategoryDropdown();
+
+      // Scroll to the form
+      document.getElementById('product-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function loadCategoryDropdown() {
+      const categorySelect = document.getElementById('prod-category');
+      const categorySet = [...new Set(adminProducts.map(p => p.category))].sort();
+      categorySelect.innerHTML = '<option value="">Select Category</option>';
+      categorySet.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+      });
+      
+      // Add option to create new category
+      const newCatOption = document.createElement('option');
+      newCatOption.value = '__new__';
+      newCatOption.textContent = '+ Add New Category';
+      categorySelect.appendChild(newCatOption);
+    }
+
+    function hideAddProductForm() {
+      document.getElementById('product-form').style.display = 'none';
+      document.getElementById('new-category-input').style.display = 'none';
+      document.getElementById('prod-new-category').value = '';
+    }
+
+    function convertImageTo300x300(url) {
+      if (!url) return url;
+      
+      // Handle unsplash.com images
+      if (url.includes('unsplash.com')) {
+        // Remove existing size parameters and add new ones
+        url = url.split('?')[0];
+        return `${url}?w=300&h=300&fit=crop`;
+      }
+      
+      // Handle images.unsplash.com
+      if (url.includes('images.unsplash.com')) {
+        const baseUrl = url.split('?')[0];
+        return `${baseUrl}?w=300&h=300&fit=crop`;
+      }
+      
+      // Handle imgur.com images
+      if (url.includes('imgur.com')) {
+        // Replace extension with thumbnail suffix
+        return url.replace(/\.(jpg|jpeg|png|gif)$/i, 'm.$1');
+      }
+      
+      // Handle Google Drive images
+      if (url.includes('drive.google.com')) {
+        const fileId = url.match(/[-\w]{25,}/);
+        if (fileId) {
+          return `https://drive.google.com/thumbnail?id=${fileId[0]}&sz=w300-h300`;
+        }
+      }
+      
+      // Handle cloudinary images
+      if (url.includes('cloudinary.com')) {
+        return url.replace(/\/upload\//, '/upload/w_300,h_300,c_fill/');
+      }
+      
+      // For other URLs, return as is
+      return url;
+    }
+
+    function handleCategoryChange(select) {
+      const newCategoryInput = document.getElementById('new-category-input');
+      const newCategoryField = document.getElementById('prod-new-category');
+      
+      if (select.value === '__new__') {
+        newCategoryInput.style.display = 'block';
+        newCategoryField.required = true;
+      } else {
+        newCategoryInput.style.display = 'none';
+        newCategoryField.required = false;
+        newCategoryField.value = '';
+      }
+    }
+
+    function editProduct(productId) {
+      const product = adminProducts.find(p => p.id === productId);
+      if (!product) return;
+
+      document.getElementById('product-form').style.display = 'block';
+      document.getElementById('form-title').textContent = 'Edit Product';
+      document.getElementById('product-id').value = productId;
+      document.getElementById('prod-name').value = product.name;
+      loadCategoryDropdown();
+      document.getElementById('prod-category').value = product.category;
+      document.getElementById('prod-price').value = product.price;
+      document.getElementById('prod-rating').value = product.rating;
+      document.getElementById('prod-description').value = product.description;
+      document.getElementById('prod-image').value = product.image;
+      
+      // Scroll to the form
+      document.getElementById('product-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function deleteProduct(productId) {
+      if (confirm('Are you sure you want to delete this product?')) {
+        await window.api.deleteProductApi(productId);
+        await refreshProducts();
+        loadProductsTab();
+        loadDashboard();
+        showNotification('Product deleted successfully');
+      }
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+      await orderManager.updateOrderStatus(orderId, newStatus);
+      await refreshOrders();
+      loadOrdersTab();
+      loadDashboard();
+      showNotification('Order status updated');
+    }
+
+    function viewOrderDetails(orderId) {
+      const order = adminOrders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const modal = document.getElementById('order-detail-modal');
+      const content = document.getElementById('order-detail-content');
+
+      let itemsHtml = order.items.map(item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>${formatPrice(item.price)}</td>
+          <td>${formatPrice(item.price * item.quantity)}</td>
+        </tr>
+      `).join('');
+
+      content.innerHTML = `
+        <h3>Order ${order.id}</h3>
+        <p><strong>Customer:</strong> ${order.email}</p>
+        <p><strong>Status:</strong> ${order.status}</p>
+        <p><strong>Date:</strong> ${order.date}</p>
+        <h4>Items</h4>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        <p><strong>Total Amount:</strong> ${formatPrice(order.total)}</p>
+      `;
+      modal.classList.add('active');
+    }
+
+    async function deleteOrder(orderId) {
+      if (confirm('Are you sure you want to delete this order?')) {
+        try {
+          await orderManager.deleteOrder(orderId);
+          await refreshOrders();
+          loadOrdersTab();
+          loadDashboard();
+          showNotification('Order deleted successfully', 'success');
+        } catch (error) {
+          console.error('Delete order error:', error);
+          showNotification('Failed to delete order: ' + error.message, 'error');
+        }
+      }
+    }
+
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const productId = parseInt(document.getElementById('product-id').value);
+      const categorySelect = document.getElementById('prod-category');
+      let category = categorySelect.value;
+      
+      // If user selected "Add New Category", use the custom input value
+      if (category === '__new__') {
+        const newCategory = document.getElementById('prod-new-category').value.trim();
+        if (!newCategory) {
+          showNotification('Please enter a category name', 'error');
+          return;
+        }
+        category = newCategory;
+      }
+      
+      if (!category) {
+        showNotification('Please select or enter a category', 'error');
+        return;
+      }
+
+      const imageUrl = document.getElementById('prod-image').value;
+      
+      const payload = {
+        name: document.getElementById('prod-name').value,
+        category: category,
+        price: parseInt(document.getElementById('prod-price').value),
+        rating: parseFloat(document.getElementById('prod-rating').value),
+        description: document.getElementById('prod-description').value,
+        image: convertImageTo300x300(imageUrl),
+      };
+
+      if (productId) {
+        await window.api.updateProductApi(productId, payload);
+        showNotification('Product updated successfully');
+      } else {
+        await window.api.addProductApi(payload);
+        showNotification('Product added successfully');
+      }
+
+      hideAddProductForm();
+      await refreshProducts();
+      loadProductsTab();
+      // Don't reload dashboard, just update the count
+      document.getElementById('total-products').textContent = adminProducts.length;
+    });
+
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.modal').classList.remove('active');
+      });
+    });
+
+    function adminLogout() {
+      authManager.logout();
+      window.location.href = '../index.html';
+    }
+
+    async function refreshProducts() {
+      adminProducts = await window.api.fetchProducts();
+    }
+
+    async function refreshOrders() {
+      adminOrders = await orderManager.getOrders();
+    }
+
+    async function refreshUsers() {
+      adminUsers = await window.api.fetchUsersApi();
+    }
+
+    async function initAdmin() {
+      await refreshProducts();
+      await refreshOrders();
+      await refreshUsers();
+      loadDashboard();
+      loadProductsTab();
+      loadOrdersTab();
+      loadUsersTab();
+    }
+
+    window.showTab = showTab;
+    window.editProduct = editProduct;
+    window.deleteProduct = deleteProduct;
+    window.showAddProductForm = showAddProductForm;
+    window.hideAddProductForm = hideAddProductForm;
+    window.handleCategoryChange = handleCategoryChange;
+    window.convertImageTo300x300 = convertImageTo300x300;
+    window.updateOrderStatus = updateOrderStatus;
+    window.viewOrderDetails = viewOrderDetails;
+    window.deleteOrder = deleteOrder;
+    window.adminLogout = adminLogout;
+
+    initAdmin();
+  </script>
+</body>
+</html>
